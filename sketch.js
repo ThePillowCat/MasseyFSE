@@ -8,7 +8,7 @@ let boxY1 = [];
 let validSquares = [];
 let boxVos = [];
 let boxVosY = [];
-let rectX = [];
+let rectX = [];  
 let rectY = [];
 let stop = false;
 let lives = 3;
@@ -50,20 +50,48 @@ let level = 0;
 //Variables for temporarily displaying numbers
 let currentShipTime;
 let numIsShownForShip = false;
-let tempShipX;
 //Variables for temporarily displaying numbers
 let currentSpiderTime;
 let numIsShownForSpider = false;
 let tempSpiderX;
 let tempSpiderY;
 let threshHold = 10000;
-let tallyingScores = false
+let tallying = false;
+let counter = 0;
+let rectCounter = 0;
 
 function tallyUp() {
-  let current = frameCount
-  for (i = 0; i < rectX.length; i++) {
-    console.log(rectX[i])
+  spiderSound.stop();
+  rectCounter = 0;
+  if (rectX.length == 0) {
+    return;
   }
+  tallying = true;
+  const rectInterval = setInterval(() => {
+    if (rectCounter < rectX.length) {
+      if (rectCounter > 0) {
+        fill("red");
+        rect(rectX[rectCounter - 1], rectY[rectCounter - 1], rectW2, rectH2);
+      }
+      fill("orange");
+      rect(rectX[rectCounter], rectY[rectCounter], rectW2, rectH2);
+      fill('black')
+      rect(595, 570, 106, 28)
+      fill(192, 203, 255);
+      textFont(font);
+      textSize(25);
+      text(score, 600, 597);
+      shoot.play();
+    }
+    if (rectCounter == rectX.length) {
+      clearInterval(rectInterval);
+      tallying = false;
+    }
+    else {
+      score+=50 
+    }
+    rectCounter++;
+  }, 150);
 }
 
 function preload() {
@@ -72,6 +100,7 @@ function preload() {
   font2 = loadFont("VT323-Regular.ttf");
   spiderSound = loadSound("Centipede_Spider_Sound.ogg");
   shoot = loadSound("shoot.mp3");
+  extraLife = loadSound("extralife.mp3")
   //song = loadSound('song.mp3')
 }
 
@@ -85,12 +114,14 @@ function setup() {
 
 function draw() {
   //playSong()
-  checkIfNewLife();
-  UI();
-  moveCentipede();
-  crossHair();
-  spider();
-  bonusShip();
+  if (!tallying) {
+    checkIfNewLife();
+    UI();
+    moveCentipede();
+    crossHair();
+    spider();
+    bonusShip();
+  }
 }
 
 function checkIfNewLife() {
@@ -100,6 +131,7 @@ function checkIfNewLife() {
     }
     if (lives > 2) {
       livesIconX.push(parseInt(livesIconX.slice(-1)) + 45);
+      extraLife.play()
     }
     lives++;
     threshHold += 10000;
@@ -148,9 +180,9 @@ function spider() {
       spiderX + 15 > crosshairX &&
       spiderX + 15 < crosshairX + 25
     ) {
-      tallyUp()
+      tallyUp();
       generateNewSpiderTimer();
-      newWave()
+      newWave();
       return;
     }
     if (
@@ -159,9 +191,9 @@ function spider() {
       spiderX - 15 > crosshairX &&
       spiderX + 15 < crosshairX + 25
     ) {
-      tallyUp()
+      tallyUp();
       generateNewSpiderTimer();
-      newWave()
+      newWave();
       return;
     }
     if (
@@ -170,9 +202,9 @@ function spider() {
       spiderY - 10 > crosshairY &&
       spiderY - 10 < crosshairY + 25
     ) {
-      tallyUp()
+      tallyUp();
       generateNewSpiderTimer();
-      newWave()
+      newWave();
       return;
     }
     if (
@@ -181,9 +213,9 @@ function spider() {
       spiderY + 10 > crosshairY &&
       spiderY + 10 < crosshairY + 25
     ) {
-      tallyUp()
+      tallyUp();
       generateNewSpiderTimer();
-      newWave()
+      newWave();
       return;
     }
     if (spiderY + 10 > 554) {
@@ -271,7 +303,7 @@ function UI() {
 function moveCentipede() {
   for (i = 0; i < boxX1.length; i++) {
     if (!validSquares.includes(true)) {
-      tallyUp()
+      tallyUp();
       newWave();
       break;
     }
@@ -477,7 +509,6 @@ function isPressed(x, y, d) {
   ) {
     fill("#c04adc");
     lives--;
-    tallyUp()
     newWave();
   } else {
     fill("white");
@@ -500,8 +531,4 @@ function newWave() {
   level++;
   velocity += 0.5;
   stop = false;
-}
-
-function mousePressed() {
-  //
 }
