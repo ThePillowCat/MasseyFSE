@@ -1,4 +1,4 @@
-let score = 9800;
+let score = 0;
 let crosshairX = 400;
 let crosshairY = 500;
 let livesIconX = [45, 90, 135];
@@ -8,7 +8,7 @@ let boxY1 = [];
 let validSquares = [];
 let boxVos = [];
 let boxVosY = [];
-let rectX = [];  
+let rectX = [];
 let rectY = [];
 let stop = false;
 let lives = 3;
@@ -16,7 +16,7 @@ let bulletX;
 let bulletY;
 let firing = false;
 let hitTarget = false;
-let velocity = 2;
+let velocity = 5;
 let boxX;
 let boxY;
 let boxVol;
@@ -59,6 +59,50 @@ let threshHold = 10000;
 let tallying = false;
 let counter = 0;
 let rectCounter = 0;
+let alphabet = ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z']
+let alpha1 = 0
+let alpha2 = 0
+let alpha3 = 0
+let letterSelected = 0
+let randomYCords = []
+
+function gameOver() {
+  clear()
+  background(0)
+  fill(255)
+  textFont(font)
+  textSize(50)
+  text('GAME OVER', 170, 100)
+  textSize(35)
+  fill('red')
+  text('Score: ' + score, 250, 170)
+  fill('white')
+  text('Enter your initials', 75, 235)
+  textSize(100)
+  text(alphabet[alpha1].toUpperCase(), 100, 400)
+  if ((frameCount/60).toFixed(0) % 2 == 0) {
+    if (letterSelected == 0) {
+      fill('#ADD8E6')
+      rect(80, 400, 130, 10)
+      fill('white')
+    }
+    else if (letterSelected == 1) {
+      fill('#ADD8E6')
+      rect(330, 400, 130, 10 )
+      fill('white')
+    }
+    else if (letterSelected == 2) {
+      fill('#ADD8E6')
+      rect(580, 400, 130, 10)
+      fill('white')
+    }
+  }
+  text(alphabet[alpha2].toUpperCase(), 350, 400)
+  text(alphabet[alpha3].toUpperCase(), 600, 400)
+  textSize(35)
+  textFont('calibri')
+  text('Use the up and down arrow keys to adjust the\n letters and space to select different letters. To\n            confirm your initial, press enter.', 75, 475)
+}
 
 function tallyUp() {
   spiderSound.stop();
@@ -75,8 +119,8 @@ function tallyUp() {
       }
       fill("orange");
       rect(rectX[rectCounter], rectY[rectCounter], rectW2, rectH2);
-      fill('black')
-      rect(595, 570, 106, 28)
+      fill("black");
+      rect(595, 570, 106, 28);
       fill(192, 203, 255);
       textFont(font);
       textSize(25);
@@ -86,9 +130,8 @@ function tallyUp() {
     if (rectCounter == rectX.length) {
       clearInterval(rectInterval);
       tallying = false;
-    }
-    else {
-      score+=50 
+    } else {
+      score += 50;
     }
     rectCounter++;
   }, 150);
@@ -100,8 +143,9 @@ function preload() {
   font2 = loadFont("VT323-Regular.ttf");
   spiderSound = loadSound("Centipede_Spider_Sound.ogg");
   shoot = loadSound("shoot.mp3");
-  extraLife = loadSound("extralife.mp3")
-  //song = loadSound('song.mp3')
+  extraLife = loadSound("extralife.mp3");
+  weirdImage = loadImage('Capture.JPG')
+  //coin = loadSound('coin insert.mp3')
 }
 
 function setup() {
@@ -109,19 +153,93 @@ function setup() {
   background(0);
   noStroke();
   frameRate(60);
+  angleMode(DEGREES)
   newWave();
+  restart()
 }
 
 function draw() {
-  //playSong()
-  if (!tallying) {
-    checkIfNewLife();
-    UI();
-    moveCentipede();
-    crossHair();
-    spider();
-    bonusShip();
+  if (screen == "game") {
+    if (!tallying) {
+      checkIfNewLife();
+      UI();
+      moveCentipede();
+      crossHair();
+      spider();
+      bonusShip();
+    }
+  } else if (screen == "title" /*&& !coin.isPlaying()*/) {
+    titleScreen()
   }
+  else if (screen == 'gameover') {
+    gameOver()
+  }
+}
+
+function titleScreen() {
+  clear()
+  background(0);
+  /*
+  stroke('green')
+  line(boundX1, 0, boundX1, 600)
+  line(boundX2, 0, boundX2, 600)
+  line(400, 0, 400, 600)
+  noStroke()
+  */
+  for (i = 0; i < boxX.length; i++) {
+    fill(colours[i])
+    circle(boxX[i], boxY[i]-20, 34)
+    if (i == 0) {
+      fill(0)
+      circle(boxX[i]-5, boxY[i]-25, 3)
+      circle(boxX[i]+5, boxY[i]-25, 3)
+      noFill()
+      stroke(0)
+      arc(boxX[i], boxY[i]-17, 15, 10, 0, 180)
+      noStroke()
+    }
+    else {
+      textFont(font2)
+      fill(0)
+      textSize(35)
+      text(letters[i], boxX[i]-7, boxY[i]-11)
+    }
+    if (boxX[i]+15 >= boundX1) {
+      boxVol2[i]  = true
+    }
+    if (boxX[i]-15 <= boundX2) {
+      boxVol2[i] = false
+    }
+    if (boxVol2[i]) {
+      boxX[i]-=1
+    }
+    else {
+      boxX[i]+=1
+    }
+  }
+  image(logo, 281, 370, logo.width-30, logo.height-30)
+  fill(183, 133, 255)
+  textFont(font2)
+  textSize(60)
+  text('Noah', 352, 515)
+  textFont(font)
+  textSize(12)
+  text('copyright 2022', 316, 540)
+  if (on) {
+    textSize(20)
+    fill('red')
+    text('Press enter', 50, 460)
+    text('to insert', 60, 500)
+    text('coin', 100, 540)
+    text('Press enter', 530, 460)
+    text('to insert', 540, 500)
+    text('coin', 580, 540)
+    /*
+    textSize(12)
+    text('Press enter to\ninsert coin', 520, 500)
+    */
+  }
+  weirdImages()
 }
 
 function checkIfNewLife() {
@@ -131,17 +249,31 @@ function checkIfNewLife() {
     }
     if (lives > 2) {
       livesIconX.push(parseInt(livesIconX.slice(-1)) + 45);
-      extraLife.play()
+      extraLife.play();
     }
     lives++;
     threshHold += 10000;
   }
 }
 
-function playSong() {
-  if (!song.isPlaying()) {
-    song.play();
-  }
+function weirdImages() {
+  image(weirdImage, 100, 100)
+  image(weirdImage, 206, 209)
+  image(weirdImage, 117, 333)
+  image(weirdImage, 124, 215)
+  image(weirdImage, 267, 99)
+  image(weirdImage, 44, 268)
+  image(weirdImage, 56, 41)
+  image(weirdImage, 160, 52)
+  image(weirdImage, 196, 143)
+  image(weirdImage, 700, 100)
+  image(weirdImage, 594, 209)
+  image(weirdImage, 683, 333)
+  image(weirdImage, 676, 215)
+  image(weirdImage, 533, 99)
+  image(weirdImage, 756, 268)
+  image(weirdImage, 800-160, 52)
+  image(weirdImage, 800-196, 143)
 }
 
 function spider() {
@@ -274,7 +406,7 @@ function UI() {
     if (validRects[i]) {
       rect(rectX[i], rectY[i], rectW2, rectH2);
     } else {
-      //deletes rectangle x and y coordinates from array if a rectangle is destroyed - saves memmory
+      //deletes rectangle x and y coordinates from array if a rectangle is destroyed - makes program more efficient
       rectX.splice(i, 1);
       rectY.splice(i, 1);
       validRects.splice(i, 1);
@@ -413,12 +545,13 @@ function fire() {
     for (j = 0; j < rectX.length; j++) {
       if (validRects[j]) {
         if (
-          bulletX > rectX[j] &&
-          bulletX < rectX[j] + 20 &&
+          bulletX+2.5 > rectX[j] &&
+          bulletX+2.5 < rectX[j] + 20 &&
           bulletY < rectY[j] + rectH2
         ) {
           firing = false;
           validRects[j] = false;
+          score += 50
         }
       }
     }
@@ -515,6 +648,20 @@ function isPressed(x, y, d) {
   }
 }
 
+function restart() {
+  boxX = [400, 410, 420, 430, 440, 450, 440, 430, 420, 410]
+  boxY = [100, 130, 160, 190, 220, 250, 280, 310, 340, 370]
+  boxVol2 = [true, true, true, true, true, true, true, true, true, true]
+  colours = ['#6aaeed', '#ef7574', '#e08d4d', '#6aaeed', '#7db048', '#7451d0', '#c23d3c', '#c04eaa', '#cdcd34', '#64cd63']
+  letters = ['', 'C', 'E', 'N', 'T', 'I', 'P', 'E', 'D', 'E']
+  boundX1 = 425
+  boundX2 = 375
+  on = true
+  t = setInterval(() => {if(!on){on = true;}else{on=false;}}, 1750)
+  screen = 'gameover'
+  velocity = 2
+}
+
 function newWave() {
   validSquares = [];
   boxX1 = [];
@@ -529,6 +676,53 @@ function newWave() {
     boxVosY.push(true);
   }
   level++;
-  velocity += 0.5;
+  velocity += 0.25;
   stop = false;
+}
+
+function keyPressed() {
+  if (keyIsDown(13)) {
+    if (screen == 'title') {
+      on = true
+      clearInterval(t)
+      screen = 'game'
+    } 
+  }
+  if (screen == 'gameover') {
+    if (keyIsDown(32)) {
+      if (letterSelected == 2) {
+        letterSelected = 0
+      }
+      else {
+        letterSelected++
+      }
+    }
+    else if (keyIsDown(38)) {
+      if (letterSelected == 0 && alpha1 > 0) {
+        alpha1--
+      }
+      else if (letterSelected == 1 && alpha2 > 0) {
+        alpha2--
+      }
+      else if (letterSelected == 2 && alpha3 > 0) {
+        alpha3--
+      }
+    }
+    else if (keyIsDown(40)) {
+      if (letterSelected == 0 && alpha1 < 25) {
+        alpha1++
+      }
+      else if (letterSelected == 1 && alpha1 < 25) {
+        alpha2++
+      }
+      else if (letterSelected == 2 && alpha3 < 25) {
+        alpha3++
+      }
+    }
+    else if (keyIsDown(13)) {
+      console.log((alphabet[alpha1]+alphabet[alpha2]+alphabet[alpha3]).toUpperCase())
+      restart()
+      screen = 'title'
+    }
+  }
 }
