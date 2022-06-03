@@ -1,4 +1,4 @@
-let score = 0;
+let score = 1000;
 let crosshairX = 400;
 let crosshairY = 500;
 let livesIconX = [45, 90, 135];
@@ -20,7 +20,7 @@ let velocity = 5;
 let boxX;
 let boxY;
 let boxVol;
-let colours;
+let coms;
 let letters;
 let boundX1;
 let boundX2;
@@ -65,7 +65,28 @@ let alpha2 = 0
 let alpha3 = 0
 let letterSelected = 0
 let randomYCords = []
+for (i = 28; i < 600; i += 28) {
+  randomYCords.push(i)
+}
+let randX = []
+let randY = []
 
+let scores = [
+   {name : "Invalid Player", score: 0},
+   {name : "Invalid Player", score: 0},
+   {name : "Invalid Player", score: 0},
+   {name : "Invalid Player", score: 0},
+   {name : "Invalid Player", score: 0},
+   {name : "Invalid Player", score: 0},
+   {name : "Invalid Player", score: 0},
+   {name : "Invalid Player", score: 0},
+   {name : "Invalid Player", score: 0},
+   {name : "Invalid Player", score: 0}
+]
+
+let initial = 'AAA'
+let showingScoreboard = false
+let storedScores
 function gameOver() {
   clear()
   background(0)
@@ -154,6 +175,9 @@ function setup() {
   noStroke();
   frameRate(60);
   angleMode(DEGREES)
+  if (getItem('scores') == null) {
+    storeItem('scores', scores)
+  }
   newWave();
   restart()
 }
@@ -173,6 +197,9 @@ function draw() {
   }
   else if (screen == 'gameover') {
     gameOver()
+  }
+  else if (screen == 'leaderboard') {
+    scoreBoard()
   }
 }
 
@@ -228,17 +255,16 @@ function titleScreen() {
   if (on) {
     textSize(20)
     fill('red')
-    text('Press enter', 50, 460)
-    text('to insert', 60, 500)
-    text('coin', 100, 540)
-    text('Press enter', 530, 460)
-    text('to insert', 540, 500)
-    text('coin', 580, 540)
-    /*
-    textSize(12)
-    text('Press enter to\ninsert coin', 520, 500)
-    */
+    text('Press enter', 50, 460-30)
+    text('to insert', 60, 500-30)
+    text('coin', 100, 540-30)
+    text('Press enter', 530, 460-30)
+    text('to insert', 540, 500-30)
+    text('coin', 580, 540-30)
   }
+  fill('orange')
+  textSize(14)
+  text('Press the l key to see player leaderboards',100, 570)
   weirdImages()
 }
 
@@ -315,6 +341,7 @@ function spider() {
       tallyUp();
       generateNewSpiderTimer();
       newWave();
+      lives--
       return;
     }
     if (
@@ -326,6 +353,7 @@ function spider() {
       tallyUp();
       generateNewSpiderTimer();
       newWave();
+      lives--
       return;
     }
     if (
@@ -337,6 +365,7 @@ function spider() {
       tallyUp();
       generateNewSpiderTimer();
       newWave();
+      lives--
       return;
     }
     if (
@@ -348,6 +377,7 @@ function spider() {
       tallyUp();
       generateNewSpiderTimer();
       newWave();
+      lives--
       return;
     }
     if (spiderY + 10 > 554) {
@@ -385,6 +415,24 @@ function generateNewSpiderTimer() {
   setTimeout(() => {
     spiderMoving = true;
   }, delay);
+}
+
+function scoreBoard() {
+  clear()
+  background(0)
+  textSize(30)
+  fill('white')
+  textFont(font)
+  text('Leaderboards', 230, 50)
+  /*
+  for (y = 1; y < 11; i++) {
+    text(y+'.', )
+  }
+  */
+  textSize(20)
+  for (i = 0; i < 10; i++) {
+    text(storedScores[i].name + ' -- ' + storedScores[i].score, 210, (i*50)+110)
+  }
 }
 
 function UI() {
@@ -429,6 +477,10 @@ function UI() {
       textSize(15);
       text("200", tempSpiderX, tempSpiderY);
     }
+  }
+  
+  if (lives == 0) {
+    screen ='gameover'
   }
 }
 
@@ -649,6 +701,7 @@ function isPressed(x, y, d) {
 }
 
 function restart() {
+  strokeWeight(1)
   boxX = [400, 410, 420, 430, 440, 450, 440, 430, 420, 410]
   boxY = [100, 130, 160, 190, 220, 250, 280, 310, 340, 370]
   boxVol2 = [true, true, true, true, true, true, true, true, true, true]
@@ -658,11 +711,13 @@ function restart() {
   boundX2 = 375
   on = true
   t = setInterval(() => {if(!on){on = true;}else{on=false;}}, 1750)
-  screen = 'gameover'
+  screen = 'title'
   velocity = 2
 }
 
 function newWave() {
+  randX.push(Math.ceil(Math.random(50,750)))
+  randY.push(random(randomYCords))
   validSquares = [];
   boxX1 = [];
   boxY1 = [];
@@ -680,15 +735,31 @@ function newWave() {
   stop = false;
 }
 
+function processScore() {
+  storedScores = getItem('scores')
+  initial = (alphabet[alpha1]+alphabet[alpha2]+alphabet[alpha3]).toUpperCase()
+  storedScores.push({name: initial, score: score})
+  storedScores.sort((a,b) => b.score-a.score)
+  storeItem('scores', storedScores)
+  restart()
+  screen = 'title'
+}
+
 function keyPressed() {
   if (keyIsDown(13)) {
     if (screen == 'title') {
       on = true
       clearInterval(t)
       screen = 'game'
-    } 
+    }
   }
   if (screen == 'gameover') {
+    if (keyIsDown(13)) {
+      on = true
+      clearInterval(t)
+      screen = 'title'
+      processScore()
+    }
     if (keyIsDown(32)) {
       if (letterSelected == 2) {
         letterSelected = 0
@@ -719,10 +790,15 @@ function keyPressed() {
         alpha3++
       }
     }
-    else if (keyIsDown(13)) {
-      console.log((alphabet[alpha1]+alphabet[alpha2]+alphabet[alpha3]).toUpperCase())
-      restart()
+  }
+  if (keyIsDown(76) && screen != 'game') {
+    if (!showingScoreboard) {
+      screen = 'leaderboard'
+      showingScoreboard = true
+    }
+    else {
       screen = 'title'
+      showingScoreboard = false
     }
   }
 }
