@@ -59,70 +59,102 @@ let threshHold = 10000;
 let tallying = false;
 let counter = 0;
 let rectCounter = 0;
-let alphabet = ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z']
-let alpha1 = 0
-let alpha2 = 0
-let alpha3 = 0
-let letterSelected = 0
-let randomYCords = []
-for (i = 28; i < 600; i += 28) {
-  randomYCords.push(i)
+let hit
+let alphabet = [
+  "a",
+  "b",
+  "c",
+  "d",
+  "e",
+  "f",
+  "g",
+  "h",
+  "i",
+  "j",
+  "k",
+  "l",
+  "m",
+  "n",
+  "o",
+  "p",
+  "q",
+  "r",
+  "s",
+  "t",
+  "u",
+  "v",
+  "w",
+  "x",
+  "y",
+  "z",
+];
+let alpha1 = 0;
+let alpha2 = 0;
+let alpha3 = 0;
+let letterSelected = 0;
+let randomYCords = [];
+for (i = 56; i < 400; i += 28) {
+  randomYCords.push(i + 12);
 }
-let randX = []
-let randY = []
-
+let randX = [];
+let randY = [];
+let tntStartTime = [];
 let scores = [
-   {name : "Invalid Player", score: 0},
-   {name : "Invalid Player", score: 0},
-   {name : "Invalid Player", score: 0},
-   {name : "Invalid Player", score: 0},
-   {name : "Invalid Player", score: 0},
-   {name : "Invalid Player", score: 0},
-   {name : "Invalid Player", score: 0},
-   {name : "Invalid Player", score: 0},
-   {name : "Invalid Player", score: 0},
-   {name : "Invalid Player", score: 0}
-]
+  { name: "Invalid Player", score: 0 },
+  { name: "Invalid Player", score: 0 },
+  { name: "Invalid Player", score: 0 },
+  { name: "Invalid Player", score: 0 },
+  { name: "Invalid Player", score: 0 },
+  { name: "Invalid Player", score: 0 },
+  { name: "Invalid Player", score: 0 },
+  { name: "Invalid Player", score: 0 },
+  { name: "Invalid Player", score: 0 },
+  { name: "Invalid Player", score: 0 },
+];
 
-let initial = 'AAA'
-let showingScoreboard = false
-let storedScores
+let initial = "AAA";
+let showingScoreboard = false;
+let storedScores;
+let isExploding = [];
+
 function gameOver() {
-  clear()
-  background(0)
-  fill(255)
-  textFont(font)
-  textSize(50)
-  text('GAME OVER', 170, 100)
-  textSize(35)
-  fill('red')
-  text('Score: ' + score, 250, 170)
-  fill('white')
-  text('Enter your initials', 75, 235)
-  textSize(100)
-  text(alphabet[alpha1].toUpperCase(), 100, 400)
-  if ((frameCount/60).toFixed(0) % 2 == 0) {
+  clear();
+  background(0);
+  fill(255);
+  textFont(font);
+  textSize(50);
+  text("GAME OVER", 170, 100);
+  textSize(35);
+  fill("red");
+  text("Score: " + score, 250, 170);
+  fill("white");
+  text("Enter your initials", 75, 235);
+  textSize(100);
+  text(alphabet[alpha1].toUpperCase(), 100, 400);
+  if ((frameCount / 60).toFixed(0) % 2 == 0) {
     if (letterSelected == 0) {
-      fill('#ADD8E6')
-      rect(80, 400, 130, 10)
-      fill('white')
-    }
-    else if (letterSelected == 1) {
-      fill('#ADD8E6')
-      rect(330, 400, 130, 10 )
-      fill('white')
-    }
-    else if (letterSelected == 2) {
-      fill('#ADD8E6')
-      rect(580, 400, 130, 10)
-      fill('white')
+      fill("#ADD8E6");
+      rect(80, 400, 130, 10);
+      fill("white");
+    } else if (letterSelected == 1) {
+      fill("#ADD8E6");
+      rect(330, 400, 130, 10);
+      fill("white");
+    } else if (letterSelected == 2) {
+      fill("#ADD8E6");
+      rect(580, 400, 130, 10);
+      fill("white");
     }
   }
-  text(alphabet[alpha2].toUpperCase(), 350, 400)
-  text(alphabet[alpha3].toUpperCase(), 600, 400)
-  textSize(35)
-  textFont('calibri')
-  text('Use the up and down arrow keys to adjust the\n letters and space to select different letters. To\n            confirm your initial, press enter.', 75, 475)
+  text(alphabet[alpha2].toUpperCase(), 350, 400);
+  text(alphabet[alpha3].toUpperCase(), 600, 400);
+  textSize(35);
+  textFont("calibri");
+  text(
+    "Use the up and down arrow keys to adjust the\n letters and space to select different letters. To\n            confirm your initial, press enter.",
+    75,
+    475
+  );
 }
 
 function tallyUp() {
@@ -165,7 +197,8 @@ function preload() {
   spiderSound = loadSound("Centipede_Spider_Sound.ogg");
   shoot = loadSound("shoot.mp3");
   extraLife = loadSound("extralife.mp3");
-  weirdImage = loadImage('Capture.JPG')
+  weirdImage = loadImage("Capture.JPG");
+  hit = loadSound('hit.mp3')
   //coin = loadSound('coin insert.mp3')
 }
 
@@ -174,12 +207,14 @@ function setup() {
   background(0);
   noStroke();
   frameRate(60);
-  angleMode(DEGREES)
-  if (getItem('scores') == null) {
-    storeItem('scores', scores)
+  angleMode(DEGREES);
+  if (getItem("scores") == null) {
+    storeItem("scores", scores);
+  } else {
+    storedScores = getItem("scores");
   }
+  restart();
   newWave();
-  restart()
 }
 
 function draw() {
@@ -193,18 +228,16 @@ function draw() {
       bonusShip();
     }
   } else if (screen == "title" /*&& !coin.isPlaying()*/) {
-    titleScreen()
-  }
-  else if (screen == 'gameover') {
-    gameOver()
-  }
-  else if (screen == 'leaderboard') {
-    scoreBoard()
+    titleScreen();
+  } else if (screen == "gameover") {
+    gameOver();
+  } else if (screen == "leaderboard") {
+    scoreBoard();
   }
 }
 
 function titleScreen() {
-  clear()
+  clear();
   background(0);
   /*
   stroke('green')
@@ -214,58 +247,56 @@ function titleScreen() {
   noStroke()
   */
   for (i = 0; i < boxX.length; i++) {
-    fill(colours[i])
-    circle(boxX[i], boxY[i]-20, 34)
+    fill(colours[i]);
+    circle(boxX[i], boxY[i] - 20, 34);
     if (i == 0) {
-      fill(0)
-      circle(boxX[i]-5, boxY[i]-25, 3)
-      circle(boxX[i]+5, boxY[i]-25, 3)
-      noFill()
-      stroke(0)
-      arc(boxX[i], boxY[i]-17, 15, 10, 0, 180)
-      noStroke()
+      fill(0);
+      circle(boxX[i] - 5, boxY[i] - 25, 3);
+      circle(boxX[i] + 5, boxY[i] - 25, 3);
+      noFill();
+      stroke(0);
+      arc(boxX[i], boxY[i] - 17, 15, 10, 0, 180);
+      noStroke();
+    } else {
+      textFont(font2);
+      fill(0);
+      textSize(35);
+      text(letters[i], boxX[i] - 7, boxY[i] - 11);
     }
-    else {
-      textFont(font2)
-      fill(0)
-      textSize(35)
-      text(letters[i], boxX[i]-7, boxY[i]-11)
+    if (boxX[i] + 15 >= boundX1) {
+      boxVol2[i] = true;
     }
-    if (boxX[i]+15 >= boundX1) {
-      boxVol2[i]  = true
-    }
-    if (boxX[i]-15 <= boundX2) {
-      boxVol2[i] = false
+    if (boxX[i] - 15 <= boundX2) {
+      boxVol2[i] = false;
     }
     if (boxVol2[i]) {
-      boxX[i]-=1
-    }
-    else {
-      boxX[i]+=1
+      boxX[i] -= 1;
+    } else {
+      boxX[i] += 1;
     }
   }
-  image(logo, 281, 370, logo.width-30, logo.height-30)
-  fill(183, 133, 255)
-  textFont(font2)
-  textSize(60)
-  text('Noah', 352, 515)
-  textFont(font)
-  textSize(12)
-  text('copyright 2022', 316, 540)
+  image(logo, 281, 370, logo.width - 30, logo.height - 30);
+  fill(183, 133, 255);
+  textFont(font2);
+  textSize(60);
+  text("Noah", 352, 515);
+  textFont(font);
+  textSize(12);
+  text("copyright 2022", 316, 540);
   if (on) {
-    textSize(20)
-    fill('red')
-    text('Press enter', 50, 460-30)
-    text('to insert', 60, 500-30)
-    text('coin', 100, 540-30)
-    text('Press enter', 530, 460-30)
-    text('to insert', 540, 500-30)
-    text('coin', 580, 540-30)
+    textSize(20);
+    fill("red");
+    text("Press enter", 50, 460 - 30);
+    text("to insert", 60, 500 - 30);
+    text("coin", 100, 540 - 30);
+    text("Press enter", 530, 460 - 30);
+    text("to insert", 540, 500 - 30);
+    text("coin", 580, 540 - 30);
   }
-  fill('orange')
-  textSize(14)
-  text('Press the l key to see player leaderboards',100, 570)
-  weirdImages()
+  fill("orange");
+  textSize(14);
+  text("Press the l key to see player leaderboards", 100, 570);
+  weirdImages();
 }
 
 function checkIfNewLife() {
@@ -283,23 +314,23 @@ function checkIfNewLife() {
 }
 
 function weirdImages() {
-  image(weirdImage, 100, 100)
-  image(weirdImage, 206, 209)
-  image(weirdImage, 117, 333)
-  image(weirdImage, 124, 215)
-  image(weirdImage, 267, 99)
-  image(weirdImage, 44, 268)
-  image(weirdImage, 56, 41)
-  image(weirdImage, 160, 52)
-  image(weirdImage, 196, 143)
-  image(weirdImage, 700, 100)
-  image(weirdImage, 594, 209)
-  image(weirdImage, 683, 333)
-  image(weirdImage, 676, 215)
-  image(weirdImage, 533, 99)
-  image(weirdImage, 756, 268)
-  image(weirdImage, 800-160, 52)
-  image(weirdImage, 800-196, 143)
+  image(weirdImage, 100, 100);
+  image(weirdImage, 206, 209);
+  image(weirdImage, 117, 333);
+  image(weirdImage, 124, 215);
+  image(weirdImage, 267, 99);
+  image(weirdImage, 44, 268);
+  image(weirdImage, 56, 41);
+  image(weirdImage, 160, 52);
+  image(weirdImage, 196, 143);
+  image(weirdImage, 700, 100);
+  image(weirdImage, 594, 209);
+  image(weirdImage, 683, 333);
+  image(weirdImage, 676, 215);
+  image(weirdImage, 533, 99);
+  image(weirdImage, 756, 268);
+  image(weirdImage, 800 - 160, 52);
+  image(weirdImage, 800 - 196, 143);
 }
 
 function spider() {
@@ -341,7 +372,7 @@ function spider() {
       tallyUp();
       generateNewSpiderTimer();
       newWave();
-      lives--
+      lives--;
       return;
     }
     if (
@@ -353,7 +384,7 @@ function spider() {
       tallyUp();
       generateNewSpiderTimer();
       newWave();
-      lives--
+      lives--;
       return;
     }
     if (
@@ -365,7 +396,7 @@ function spider() {
       tallyUp();
       generateNewSpiderTimer();
       newWave();
-      lives--
+      lives--;
       return;
     }
     if (
@@ -377,7 +408,7 @@ function spider() {
       tallyUp();
       generateNewSpiderTimer();
       newWave();
-      lives--
+      lives--;
       return;
     }
     if (spiderY + 10 > 554) {
@@ -418,20 +449,24 @@ function generateNewSpiderTimer() {
 }
 
 function scoreBoard() {
-  clear()
-  background(0)
-  textSize(30)
-  fill('white')
-  textFont(font)
-  text('Leaderboards', 230, 50)
+  clear();
+  background(0);
+  textSize(30);
+  fill("white");
+  textFont(font);
+  text("Leaderboards", 230, 50);
   /*
   for (y = 1; y < 11; i++) {
     text(y+'.', )
   }
   */
-  textSize(20)
+  textSize(20);
   for (i = 0; i < 10; i++) {
-    text(storedScores[i].name + ' -- ' + storedScores[i].score, 210, (i*50)+110)
+    text(
+      storedScores[i].name + " -- " + storedScores[i].score,
+      210,
+      i * 50 + 110
+    );
   }
 }
 
@@ -478,9 +513,55 @@ function UI() {
       text("200", tempSpiderX, tempSpiderY);
     }
   }
-  
+  //draws tnt block
+  for (i = 0; i < randX.length; i++) {
+    //20, 9
+    if (isExploding[i].exploding) {
+      explode(isExploding[i].time, i);
+    }
+    else {
+      fill("red");
+      rect(randX[i], randY[i], 40, 20);
+      textSize(12);
+      textFont(font);
+      fill("black");
+      text("TNT", randX[i] + 2, randY[i] + 16);
+    }
+  }
   if (lives == 0) {
-    screen ='gameover'
+    screen = "gameover";
+  }
+}
+
+function explode(time, tntNum) {
+  if ((frameCount / 60).toFixed(1) - (time / 60).toFixed(1) < 0.3) {
+    fill("orange")
+    circle(randX[tntNum] + 20, randY[tntNum] + 10, 70);
+    isExploding[tntNum].diameter = 70
+  } else if ((frameCount / 60).toFixed(1) - (time / 60).toFixed(1) < 0.6) {
+    fill('yellow')
+    circle(randX[tntNum] + 20, randY[tntNum] + 10, 90);
+    isExploding[tntNum].diameter = 90
+  } else if ((frameCount / 60).toFixed(1) - (time / 60).toFixed(1) < 1.5) {
+    fill('red')
+    circle(randX[tntNum] + 20, randY[tntNum] + 10, 120);
+    isExploding[tntNum].diameter = 120
+  } else if ((frameCount / 60).toFixed(1) - (time / 60).toFixed(1) < 1.8) {
+    fill('yellow')
+    circle(randX[tntNum] + 20, randY[tntNum] + 10, 90);
+    isExploding[tntNum].diameter = 90
+  } else if ((frameCount / 60).toFixed(1) - (time / 60).toFixed(1) < 2.1) {
+    fill('red')
+    circle(randX[tntNum] + 20, randY[tntNum] + 10, 120);
+    isExploding[tntNum].diameter = 120
+  } else if ((frameCount / 60).toFixed(1) - (time / 60).toFixed(1) < 2.4) {
+    fill('yellow')
+    circle(randX[tntNum] + 20, randY[tntNum] + 10, 90);
+    isExploding[tntNum].diameter = 90
+  } else if ((frameCount / 60).toFixed(1) - (time / 60).toFixed(1) > 2.4) {
+    randX.splice(tntNum, 1)
+    randY.splice(tntNum, 1)
+    isExploding.splice(tntNum,1)
   }
 }
 
@@ -548,6 +629,42 @@ function moveCentipede() {
           }
         }
       }
+      for (j = 0; j < randX.length; j++) {
+        if (!isExploding[j].exploding) {
+          if (
+            boxX1[i] + 28 > randX[j] &&
+            boxX1[i] + 28 < randX[j] + 40 &&
+            boxY1[i] == randY[j] - 12
+          ) {
+            boxVos[i] = false;
+            //checks if the centipede is moving down or up
+            if (boxVosY[i]) {
+              boxY1[i] += 28;
+            } else {
+              boxY1[i] -= 28;
+            }
+          }
+          if (
+            boxX1[i] > randX[j] &&
+            boxX1[i] < randX[j] + 40 &&
+            boxY1[i] == randY[j] - 12
+          ) {
+            boxVos[i] = true;
+            //checks if the centipede is moving down or up
+            if (boxVosY[i]) {
+              boxY1[i] += 28;
+            } else {
+              boxY1[i] -= 28;
+            }
+          }
+        }
+        else {
+          if(dist(boxX1[i] + 14, boxY1[i] + 14, randX[j]+20, randY[j]+10) <= isExploding[j].diameter/2+14) {
+            validSquares[i] = false;
+            score+=100
+          }
+        }
+      }
       if (boxVos[i]) {
         boxX1[i] += velocity;
       } else {
@@ -591,22 +708,41 @@ function fire() {
     fill("white");
     rect(bulletX, bulletY, 5, 5);
     bulletY -= 10;
+    //checks if the bullet went of the screen
     if (bulletY < 0) {
       firing = false;
     }
+    //checks if the bullet hit any rectangle on the screen
     for (j = 0; j < rectX.length; j++) {
       if (validRects[j]) {
         if (
-          bulletX+2.5 > rectX[j] &&
-          bulletX+2.5 < rectX[j] + 20 &&
+          bulletX + 2.5 > rectX[j] &&
+          bulletX + 2.5 < rectX[j] + 20 &&
           bulletY < rectY[j] + rectH2
         ) {
           firing = false;
           validRects[j] = false;
-          score += 50
+          score += 50;
         }
       }
     }
+    //checks if the bullet hit a tnt block
+    for (j = 0; j < randX.length; j++) {
+      if (!isExploding[j].exploding) {
+        if (
+          bulletX + 2.5 > randX[j] &&
+          bulletX + 2.5 < randX[j] + 40 &&
+          bulletY < randY[j] + 20
+        ) {
+          hit.play()
+          firing = false;
+          isExploding[j].time = frameCount;
+          isExploding[j].exploding = true;
+          break;
+        }
+      }
+    }
+    //checks if the bullet hit any part of the centipede
     for (i = 0; i < boxX1.length; i++) {
       if (validSquares[i]) {
         if (
@@ -625,6 +761,7 @@ function fire() {
         }
       }
     }
+    //checks if a ship is moving and if it was hit
     if (shipMoving) {
       if (bulletX > shipX && bulletX < shipX + shipW && bulletY < 20) {
         firing = false;
@@ -636,12 +773,13 @@ function fire() {
         generateNewShipTimer();
       }
     }
+    //checks if a spider was moving and if it was hit
     if (spiderMoving) {
       if (
-        bulletX > spiderX + 2.5 &&
-        bulletX < spiderX + 30 + 2.5 &&
-        bulletY > spiderY + 2.5 &&
-        bulletY < spiderY + 20 + 2.5
+        bulletX + 2.5 > spiderX &&
+        bulletX + 2.5 < spiderX + 30 &&
+        bulletY > spiderY &&
+        bulletY < spiderY + 20
       ) {
         spiderMoving = false;
         firing = false;
@@ -686,6 +824,7 @@ function generateNewShipTimer() {
 }
 
 function isPressed(x, y, d) {
+  //I made this function before I learned a better way to detect collision, but kept it because it did the job
   if (
     dist(x, y, crosshairX, crosshairY) <= d / 2 ||
     dist(x, y, crosshairX + 20, crosshairY) <= d / 2 ||
@@ -694,6 +833,7 @@ function isPressed(x, y, d) {
   ) {
     fill("#c04adc");
     lives--;
+    tallyUp()
     newWave();
   } else {
     fill("white");
@@ -701,23 +841,46 @@ function isPressed(x, y, d) {
 }
 
 function restart() {
-  strokeWeight(1)
-  boxX = [400, 410, 420, 430, 440, 450, 440, 430, 420, 410]
-  boxY = [100, 130, 160, 190, 220, 250, 280, 310, 340, 370]
-  boxVol2 = [true, true, true, true, true, true, true, true, true, true]
-  colours = ['#6aaeed', '#ef7574', '#e08d4d', '#6aaeed', '#7db048', '#7451d0', '#c23d3c', '#c04eaa', '#cdcd34', '#64cd63']
-  letters = ['', 'C', 'E', 'N', 'T', 'I', 'P', 'E', 'D', 'E']
-  boundX1 = 425
-  boundX2 = 375
-  on = true
-  t = setInterval(() => {if(!on){on = true;}else{on=false;}}, 1750)
-  screen = 'title'
-  velocity = 2
+  strokeWeight(1);
+  boxX = [400, 410, 420, 430, 440, 450, 440, 430, 420, 410];
+  boxY = [100, 130, 160, 190, 220, 250, 280, 310, 340, 370];
+  boxVol2 = [true, true, true, true, true, true, true, true, true, true];
+  colours = [
+    "#6aaeed",
+    "#ef7574",
+    "#e08d4d",
+    "#6aaeed",
+    "#7db048",
+    "#7451d0",
+    "#c23d3c",
+    "#c04eaa",
+    "#cdcd34",
+    "#64cd63",
+  ];
+  letters = ["", "C", "E", "N", "T", "I", "P", "E", "D", "E"];
+  boundX1 = 425;
+  boundX2 = 375;
+  randX = [];
+  randY = [];
+  on = true;
+  t = setInterval(() => {
+    if (!on) {
+      on = true;
+    } else {
+      on = false;
+    }
+  }, 1750);
+  screen = "title";
+  velocity = 2;
+  lives = 3;
 }
 
 function newWave() {
-  randX.push(Math.ceil(Math.random(50,750)))
-  randY.push(random(randomYCords))
+  if (randX.length < 6) {
+    randX.push(Math.ceil(random(50, 710)));
+    randY.push(random(randomYCords));
+    isExploding.push({ exploding: false });
+  }
   validSquares = [];
   boxX1 = [];
   boxY1 = [];
@@ -736,69 +899,67 @@ function newWave() {
 }
 
 function processScore() {
-  storedScores = getItem('scores')
-  initial = (alphabet[alpha1]+alphabet[alpha2]+alphabet[alpha3]).toUpperCase()
-  storedScores.push({name: initial, score: score})
-  storedScores.sort((a,b) => b.score-a.score)
-  storeItem('scores', storedScores)
-  restart()
-  screen = 'title'
+  storedScores = getItem("scores");
+  initial = (
+    alphabet[alpha1] +
+    alphabet[alpha2] +
+    alphabet[alpha3]
+  ).toUpperCase();
+  storedScores.push({ name: initial, score: score });
+  storedScores.sort((a, b) => b.score - a.score);
+  storeItem("scores", storedScores);
+  newWave();
+  restart();
+  screen = "title";
 }
 
 function keyPressed() {
   if (keyIsDown(13)) {
-    if (screen == 'title') {
-      on = true
-      clearInterval(t)
-      screen = 'game'
+    if (screen == "title") {
+      on = true;
+      clearInterval(t);
+      screen = "game";
     }
   }
-  if (screen == 'gameover') {
+  if (screen == "gameover") {
     if (keyIsDown(13)) {
-      on = true
-      clearInterval(t)
-      screen = 'title'
-      processScore()
+      on = true;
+      clearInterval(t);
+      screen = "title";
+      processScore();
     }
     if (keyIsDown(32)) {
       if (letterSelected == 2) {
-        letterSelected = 0
+        letterSelected = 0;
+      } else {
+        letterSelected++;
       }
-      else {
-        letterSelected++
-      }
-    }
-    else if (keyIsDown(38)) {
+    } else if (keyIsDown(38)) {
       if (letterSelected == 0 && alpha1 > 0) {
-        alpha1--
+        alpha1--;
+      } else if (letterSelected == 1 && alpha2 > 0) {
+        alpha2--;
+      } else if (letterSelected == 2 && alpha3 > 0) {
+        alpha3--;
       }
-      else if (letterSelected == 1 && alpha2 > 0) {
-        alpha2--
-      }
-      else if (letterSelected == 2 && alpha3 > 0) {
-        alpha3--
-      }
-    }
-    else if (keyIsDown(40)) {
+    } else if (keyIsDown(40)) {
       if (letterSelected == 0 && alpha1 < 25) {
-        alpha1++
-      }
-      else if (letterSelected == 1 && alpha1 < 25) {
-        alpha2++
-      }
-      else if (letterSelected == 2 && alpha3 < 25) {
-        alpha3++
+        alpha1++;
+      } else if (letterSelected == 1 && alpha2 < 25) {
+        alpha2++;
+      } else if (letterSelected == 2 && alpha3 < 25) {
+        alpha3++;
       }
     }
   }
-  if (keyIsDown(76) && screen != 'game') {
+  if (keyIsDown(76) && screen != "game") {
     if (!showingScoreboard) {
-      screen = 'leaderboard'
-      showingScoreboard = true
-    }
-    else {
-      screen = 'title'
-      showingScoreboard = false
+      screen = "leaderboard";
+      showingScoreboard = true;
+    } else {
+      screen = "title";
+      showingScoreboard = false;
     }
   }
 }
+//wisam was here
