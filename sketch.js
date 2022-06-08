@@ -59,7 +59,20 @@ let threshHold = 10000;
 let tallying = false;
 let counter = 0;
 let rectCounter = 0;
-let hit
+let hit;
+//This is when I learned about objects. I wish I used them earlier...
+let powerUpState = {
+  x: undefined,
+  y: undefined,
+  timeHit: undefined,
+  shown: true,
+  timeSpawned: undefined,
+  powerUp: undefined,
+  width: 50,
+  delay: undefined
+};
+let timeLeftForPowerUp
+let powers = ["increasedSpeed", "increasedCentipedeSpeed", "increasedScores"];
 let alphabet = [
   "a",
   "b",
@@ -111,7 +124,6 @@ let scores = [
   { name: "Invalid Player", score: 0 },
   { name: "Invalid Player", score: 0 },
 ];
-
 let initial = "AAA";
 let showingScoreboard = false;
 let storedScores;
@@ -198,7 +210,7 @@ function preload() {
   shoot = loadSound("shoot.mp3");
   extraLife = loadSound("extralife.mp3");
   weirdImage = loadImage("Capture.JPG");
-  hit = loadSound('hit.mp3')
+  hit = loadSound("hit.mp3");
   //coin = loadSound('coin insert.mp3')
 }
 
@@ -213,6 +225,8 @@ function setup() {
   } else {
     storedScores = getItem("scores");
   }
+  powerUpState.x = Math.ceil(random(50, 710));
+  powerUpState.y = random(randomYCords);
   restart();
   newWave();
 }
@@ -226,6 +240,7 @@ function draw() {
       crossHair();
       spider();
       bonusShip();
+      powerUp();
     }
   } else if (screen == "title" /*&& !coin.isPlaying()*/) {
     titleScreen();
@@ -336,8 +351,11 @@ function weirdImages() {
 function spider() {
   //width: 20, height: 25
   if (spiderMoving) {
-    if (!spiderSound.isPlaying()) {
+    if (!spiderSound.isPlaying() && !tallying) {
       spiderSound.play();
+    }
+    if (lives == 0 || tallying) {
+      spiderSound.stop();
     }
     fill(0, 0, 255);
     spiderVY += 0.125;
@@ -455,19 +473,17 @@ function scoreBoard() {
   fill("white");
   textFont(font);
   text("Leaderboards", 230, 50);
-  /*
-  for (y = 1; y < 11; i++) {
-    text(y+'.', )
-  }
-  */
   textSize(20);
   for (i = 0; i < 10; i++) {
     text(
       storedScores[i].name + " -- " + storedScores[i].score,
       210,
-      i * 50 + 110
+      i * 50 + 90
     );
   }
+  fill("orange");
+  textSize(14);
+  text("Press the l key to return to the start screen", 80, 570);
 }
 
 function UI() {
@@ -513,13 +529,11 @@ function UI() {
       text("200", tempSpiderX, tempSpiderY);
     }
   }
-  //draws tnt block
   for (i = 0; i < randX.length; i++) {
     //20, 9
     if (isExploding[i].exploding) {
       explode(isExploding[i].time, i);
-    }
-    else {
+    } else {
       fill("red");
       rect(randX[i], randY[i], 40, 20);
       textSize(12);
@@ -529,39 +543,41 @@ function UI() {
     }
   }
   if (lives == 0) {
+    newWave();
+    restart();
     screen = "gameover";
   }
 }
 
 function explode(time, tntNum) {
   if ((frameCount / 60).toFixed(1) - (time / 60).toFixed(1) < 0.3) {
-    fill("orange")
+    fill("orange");
     circle(randX[tntNum] + 20, randY[tntNum] + 10, 70);
-    isExploding[tntNum].diameter = 70
+    isExploding[tntNum].diameter = 70;
   } else if ((frameCount / 60).toFixed(1) - (time / 60).toFixed(1) < 0.6) {
-    fill('yellow')
+    fill("yellow");
     circle(randX[tntNum] + 20, randY[tntNum] + 10, 90);
-    isExploding[tntNum].diameter = 90
+    isExploding[tntNum].diameter = 90;
   } else if ((frameCount / 60).toFixed(1) - (time / 60).toFixed(1) < 1.5) {
-    fill('red')
+    fill("red");
     circle(randX[tntNum] + 20, randY[tntNum] + 10, 120);
-    isExploding[tntNum].diameter = 120
+    isExploding[tntNum].diameter = 120;
   } else if ((frameCount / 60).toFixed(1) - (time / 60).toFixed(1) < 1.8) {
-    fill('yellow')
+    fill("yellow");
     circle(randX[tntNum] + 20, randY[tntNum] + 10, 90);
-    isExploding[tntNum].diameter = 90
+    isExploding[tntNum].diameter = 90;
   } else if ((frameCount / 60).toFixed(1) - (time / 60).toFixed(1) < 2.1) {
-    fill('red')
+    fill("red");
     circle(randX[tntNum] + 20, randY[tntNum] + 10, 120);
-    isExploding[tntNum].diameter = 120
+    isExploding[tntNum].diameter = 120;
   } else if ((frameCount / 60).toFixed(1) - (time / 60).toFixed(1) < 2.4) {
-    fill('yellow')
+    fill("yellow");
     circle(randX[tntNum] + 20, randY[tntNum] + 10, 90);
-    isExploding[tntNum].diameter = 90
+    isExploding[tntNum].diameter = 90;
   } else if ((frameCount / 60).toFixed(1) - (time / 60).toFixed(1) > 2.4) {
-    randX.splice(tntNum, 1)
-    randY.splice(tntNum, 1)
-    isExploding.splice(tntNum,1)
+    randX.splice(tntNum, 1);
+    randY.splice(tntNum, 1);
+    isExploding.splice(tntNum, 1);
   }
 }
 
@@ -657,11 +673,41 @@ function moveCentipede() {
               boxY1[i] -= 28;
             }
           }
-        }
-        else {
-          if(dist(boxX1[i] + 14, boxY1[i] + 14, randX[j]+20, randY[j]+10) <= isExploding[j].diameter/2+14) {
+        } else {
+          if (
+            dist(boxX1[i] + 14, boxY1[i] + 14, randX[j] + 20, randY[j] + 10) <=
+            isExploding[j].diameter / 2 + 14
+          ) {
             validSquares[i] = false;
-            score+=100
+            score += 100;
+          }
+        }
+      }
+      if (powerUpState.shown) {
+        if ((boxY1[i] > powerUpState.y && boxY1[i] < powerUpState.y+powerUpState.width) || (boxY1[i]+28 > powerUpState.y && boxY1[i]+28 < powerUpState.y+powerUpState.width)) {
+          if (
+            boxX1[i] + 28 > powerUpState.x &&
+            boxX1[i] + 28 < powerUpState.x + powerUpState.width
+          ) {
+            boxVos[i] = false;
+            //checks if the centipede is moving down or up
+            if (boxVosY[i]) {
+              boxY1[i] += 28;
+            } else {
+              boxY1[i] -= 28;
+            }
+          }
+          if (
+            boxX1[i] > powerUpState.x &&
+            boxX1[i] < powerUpState.x + powerUpState.width
+          ) {
+            boxVos[i] = true;
+            //checks if the centipede is moving down or up
+            if (boxVosY[i]) {
+              boxY1[i] += 28;
+            } else {
+              boxY1[i] -= 28;
+            }
           }
         }
       }
@@ -674,6 +720,46 @@ function moveCentipede() {
   }
 }
 
+function powerUp() {
+  if (powerUpState.shown) {
+    timeLeftForPowerUp = 10-((frameCount/60).toFixed(0) - (powerUpState.timeSpawned/60).toFixed(0)) 
+    if (timeLeftForPowerUp < 1) {
+      generateNewPowerUpTimer('time')
+      return
+    }
+    fill('yellow')
+    square(powerUpState.x, powerUpState.y, 50);
+    fill('black')
+    textSize(30)
+    text("?", powerUpState.x+12, powerUpState.y+32)
+    textSize(15)
+    text(timeLeftForPowerUp, powerUpState.x+19, powerUpState.y+50)
+  }
+}
+
+function generateNewPowerUpTimer(howBlockWasDestroyed) {
+  if (howBlockWasDestroyed == 'bullet') {
+    //power in use for 10 seconds
+    powerUpState.powerInUse = true
+    powerUpState.delay = Math.ceil(Math.random()*10+15)
+    setTimeout(()=>{
+      powerUpState.powerUp = random(powers)
+      powerUpState.powerInUse = false
+    }, 10000)
+  }
+  else {
+    powerUpState.delay = Math.ceil(Math.random()*10+10)
+    powerUpState.powerUp = random(powers)
+  }
+  powerUpState.shown = false
+  setTimeout(() => {
+    powerUpState.shown = true
+    powerUpState.x = Math.ceil(random(50, 710));
+    powerUpState.y = random(randomYCords);
+    powerUpState.timeSpawned = frameCount
+  }, powerUpState.delay*1000)
+}
+  
 function crossHair() {
   //Moves the crosshair if the user chooses to play with the arrow keys
   //Redraws the screen to animate the crosshair
@@ -707,7 +793,26 @@ function fire() {
   if (firing) {
     fill("white");
     rect(bulletX, bulletY, 5, 5);
-    bulletY -= 10;
+    for (i = 0; i < 5; i++) {
+      bulletY -= 2;
+      if (spiderMoving) {
+        if (
+          bulletX + 2.5 > spiderX &&
+          bulletX + 2.5 < spiderX + 30 &&
+          bulletY > spiderY &&
+          bulletY < spiderY + 20
+        ) {
+          spiderMoving = false;
+          firing = false;
+          currentSpiderTime = (frameCount / 60).toFixed(0);
+          tempSpiderX = spiderX;
+          tempSpiderY = spiderY;
+          numIsShownForSpider = true;
+          generateNewSpiderTimer();
+          break;
+        }
+      }
+    }
     //checks if the bullet went of the screen
     if (bulletY < 0) {
       firing = false;
@@ -734,7 +839,7 @@ function fire() {
           bulletX + 2.5 < randX[j] + 40 &&
           bulletY < randY[j] + 20
         ) {
-          hit.play()
+          hit.play();
           firing = false;
           isExploding[j].time = frameCount;
           isExploding[j].exploding = true;
@@ -773,21 +878,16 @@ function fire() {
         generateNewShipTimer();
       }
     }
-    //checks if a spider was moving and if it was hit
-    if (spiderMoving) {
+    //powerUpState.x
+    if (powerUpState.shown) {
       if (
-        bulletX + 2.5 > spiderX &&
-        bulletX + 2.5 < spiderX + 30 &&
-        bulletY > spiderY &&
-        bulletY < spiderY + 20
+        bulletX + 2.5 > powerUpState.x &&
+        bulletX + 2.5 < powerUpState.x + powerUpState.width &&
+        bulletY > powerUpState.y &&
+        bulletY < powerUpState.y + powerUpState.width
       ) {
-        spiderMoving = false;
+        generateNewPowerUpTimer('bullet')
         firing = false;
-        currentSpiderTime = (frameCount / 60).toFixed(0);
-        tempSpiderX = spiderX;
-        tempSpiderY = spiderY;
-        numIsShownForSpider = true;
-        generateNewSpiderTimer();
       }
     }
   }
@@ -833,7 +933,7 @@ function isPressed(x, y, d) {
   ) {
     fill("#c04adc");
     lives--;
-    tallyUp()
+    tallyUp();
     newWave();
   } else {
     fill("white");
@@ -876,7 +976,7 @@ function restart() {
 }
 
 function newWave() {
-  if (randX.length < 6) {
+  if (randX.length < 10 && level % 2 == 0) {
     randX.push(Math.ceil(random(50, 710)));
     randY.push(random(randomYCords));
     isExploding.push({ exploding: false });
@@ -919,6 +1019,8 @@ function keyPressed() {
       on = true;
       clearInterval(t);
       screen = "game";
+      powerUpState.timeSpawned = frameCount
+      powerUpState.powerUp = random(powers)
     }
   }
   if (screen == "gameover") {
@@ -962,4 +1064,9 @@ function keyPressed() {
     }
   }
 }
+
 //wisam was here
+//Add speed power block
+//Add increased fire rate power-up
+//Add decreased speed power block
+//Possibly add power block that decreases speed of centipede
