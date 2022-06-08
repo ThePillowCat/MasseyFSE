@@ -69,10 +69,11 @@ let powerUpState = {
   timeSpawned: undefined,
   powerUp: undefined,
   width: 50,
-  delay: undefined
+  delay: undefined,
+  timeLeftForPowerUP : undefined
 };
 let timeLeftForPowerUp
-let powers = ["increasedSpeed", "increasedCentipedeSpeed", "increasedScores"];
+let powers = ["+ Speed", "+ Centipede Speed", "+ Score"];
 let alphabet = [
   "a",
   "b",
@@ -735,6 +736,15 @@ function powerUp() {
     textSize(15)
     text(timeLeftForPowerUp, powerUpState.x+19, powerUpState.y+50)
   }
+  else if (powerUpState.powerInUse) {
+    
+    textSize(15) 
+    fill('#30D5C8')
+    text(/*powerUpState.powerUp*/"+   Speed", 300, 590)
+powerUpState.timeLeftForPowerUp = 10-((frameCount/60).toFixed(0)-(powerUpState.timeDestroyed/60).toFixed(0))
+    fill('#30D5C8')
+    rect(175, 573, (powerUpState.timeLeftForPowerUp)*10, 20)
+  }
 }
 
 function generateNewPowerUpTimer(howBlockWasDestroyed) {
@@ -742,7 +752,10 @@ function generateNewPowerUpTimer(howBlockWasDestroyed) {
     //power in use for 10 seconds
     powerUpState.powerInUse = true
     powerUpState.delay = Math.ceil(Math.random()*10+15)
+    powerUpState.timeDestroyed = frameCount
+    velocity+=5
     setTimeout(()=>{
+      velocity-=5
       powerUpState.powerUp = random(powers)
       powerUpState.powerInUse = false
     }, 10000)
