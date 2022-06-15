@@ -1,4 +1,4 @@
-let score = 1000;
+let score = 0;
 let crosshairX = 400;
 let crosshairY = 500;
 let livesIconX = [45, 90, 135];
@@ -18,6 +18,7 @@ let firing = false;
 let hitTarget = false;
 let velocity = 5;
 let boxX;
+let squareColor = (255, 0, 0);
 let boxY;
 let boxVol;
 let coms;
@@ -42,6 +43,7 @@ let delay2;
 let delay3;
 let shipX = 100;
 let shipVX = 10;
+let shipY = 25
 let shipMoving = true;
 let validRects = [];
 let shipDirection = "left";
@@ -73,7 +75,7 @@ let powerUpState = {
   timeLeftForPowerUP : undefined
 };
 let timeLeftForPowerUp
-let powers = ["+ Speed", "+ Centipede Speed", "+ Score"];
+let powers = ["+ Moving Speed", "+ Centipede Speed", "- Centipede Speed", "- Moving Speed", "Invincibility", "Double Scores"];
 let alphabet = [
   "a",
   "b",
@@ -129,6 +131,10 @@ let initial = "AAA";
 let showingScoreboard = false;
 let storedScores;
 let isExploding = [];
+let crosshairSpeed = 5
+let tempVelocity 
+let scoreMultiplier = 1
+let invincible = false
 
 function gameOver() {
   clear();
@@ -223,9 +229,8 @@ function setup() {
   angleMode(DEGREES);
   if (getItem("scores") == null) {
     storeItem("scores", scores);
-  } else {
-    storedScores = getItem("scores");
   }
+  storedScores = getItem("scores");
   powerUpState.x = Math.ceil(random(50, 710));
   powerUpState.y = random(randomYCords);
   restart();
@@ -317,7 +322,7 @@ function titleScreen() {
 
 function checkIfNewLife() {
   if (score >= threshHold) {
-    if (lives > 10) {
+    if (lives > 5) {
       return;
     }
     if (lives > 2) {
@@ -382,53 +387,55 @@ function spider() {
     fill(0);
     circle(spiderX - 5, spiderY - 3, 4);
     circle(spiderX + 5, spiderY - 3, 4);
-    if (
-      spiderY > crosshairY &&
-      spiderY < crosshairY + 25 &&
-      spiderX + 15 > crosshairX &&
-      spiderX + 15 < crosshairX + 25
-    ) {
-      tallyUp();
-      generateNewSpiderTimer();
-      newWave();
-      lives--;
-      return;
-    }
-    if (
-      spiderY > crosshairY &&
-      spiderY < crosshairY + 25 &&
-      spiderX - 15 > crosshairX &&
-      spiderX + 15 < crosshairX + 25
-    ) {
-      tallyUp();
-      generateNewSpiderTimer();
-      newWave();
-      lives--;
-      return;
-    }
-    if (
-      spiderX > crosshairX &&
-      spiderX < crosshairX + 20 &&
-      spiderY - 10 > crosshairY &&
-      spiderY - 10 < crosshairY + 25
-    ) {
-      tallyUp();
-      generateNewSpiderTimer();
-      newWave();
-      lives--;
-      return;
-    }
-    if (
-      spiderX > crosshairX &&
-      spiderX < crosshairX + 20 &&
-      spiderY + 10 > crosshairY &&
-      spiderY + 10 < crosshairY + 25
-    ) {
-      tallyUp();
-      generateNewSpiderTimer();
-      newWave();
-      lives--;
-      return;
+    if (!invincible) {
+      if (
+        spiderY > crosshairY &&
+        spiderY < crosshairY + 25 &&
+        spiderX + 15 > crosshairX &&
+        spiderX + 15 < crosshairX + 25
+      ) {
+        tallyUp();
+        generateNewSpiderTimer();
+        newWave();
+        lives--;
+        return;
+      }
+      if (
+        spiderY > crosshairY &&
+        spiderY < crosshairY + 25 &&
+        spiderX - 15 > crosshairX &&
+        spiderX + 15 < crosshairX + 25
+      ) {
+        tallyUp();
+        generateNewSpiderTimer();
+        newWave();
+        lives--;
+        return;
+      }
+      if (
+        spiderX > crosshairX &&
+        spiderX < crosshairX + 20 &&
+        spiderY - 10 > crosshairY &&
+        spiderY - 10 < crosshairY + 25
+      ) {
+        tallyUp();
+        generateNewSpiderTimer();
+        newWave();
+        lives--;
+        return;
+      }
+      if (
+        spiderX > crosshairX &&
+        spiderX < crosshairX + 20 &&
+        spiderY + 10 > crosshairY &&
+        spiderY + 10 < crosshairY + 25
+      ) {
+        tallyUp();
+        generateNewSpiderTimer();
+        newWave();
+        lives--;
+        return;
+      }
     }
     if (spiderY + 10 > 554) {
       spiderY = 544;
@@ -445,6 +452,7 @@ function spider() {
   }
 }
 
+//Generates a random time for the spider to appear again
 function generateNewSpiderTimer() {
   spiderMoving = false;
   current = frameCount;
@@ -487,6 +495,7 @@ function scoreBoard() {
   text("Press the l key to return to the start screen", 80, 570);
 }
 
+//draws the UI in the game as well as all the menus
 function UI() {
   clear();
   background(0);
@@ -518,7 +527,7 @@ function UI() {
     } else {
       fill(192, 203, 255);
       textSize(15);
-      text("1000", tempShipX, 25);
+      text(1000*scoreMultiplier, tempShipX, 25);
     }
   }
   if (numIsShownForSpider) {
@@ -527,7 +536,7 @@ function UI() {
     } else {
       fill(192, 203, 255);
       textSize(15);
-      text("200", tempSpiderX, tempSpiderY);
+      text(200*scoreMultiplier, tempSpiderX, tempSpiderY);
     }
   }
   for (i = 0; i < randX.length; i++) {
@@ -544,12 +553,11 @@ function UI() {
     }
   }
   if (lives == 0) {
-    newWave();
-    restart();
     screen = "gameover";
   }
 }
 
+//tnt animation
 function explode(time, tntNum) {
   if ((frameCount / 60).toFixed(1) - (time / 60).toFixed(1) < 0.3) {
     fill("orange");
@@ -582,6 +590,7 @@ function explode(time, tntNum) {
   }
 }
 
+//Moves the centipede and checks if it hit a tnt block, wall, or power up block
 function moveCentipede() {
   for (i = 0; i < boxX1.length; i++) {
     if (!validSquares.includes(true)) {
@@ -680,7 +689,7 @@ function moveCentipede() {
             isExploding[j].diameter / 2 + 14
           ) {
             validSquares[i] = false;
-            score += 100;
+            score += 100*scoreMultiplier;
           }
         }
       }
@@ -721,6 +730,7 @@ function moveCentipede() {
   }
 }
 
+//Displays the powerUp block and rectangle that shows remaining time
 function powerUp() {
   if (powerUpState.shown) {
     timeLeftForPowerUp = 10-((frameCount/60).toFixed(0) - (powerUpState.timeSpawned/60).toFixed(0)) 
@@ -737,25 +747,60 @@ function powerUp() {
     text(timeLeftForPowerUp, powerUpState.x+19, powerUpState.y+50)
   }
   else if (powerUpState.powerInUse) {
-    
     textSize(15) 
     fill('#30D5C8')
-    text(/*powerUpState.powerUp*/"+   Speed", 300, 590)
+    text(powerUpState.powerUp, livesIconX[livesIconX.length-1]+200, 590)
 powerUpState.timeLeftForPowerUp = 10-((frameCount/60).toFixed(0)-(powerUpState.timeDestroyed/60).toFixed(0))
     fill('#30D5C8')
-    rect(175, 573, (powerUpState.timeLeftForPowerUp)*10, 20)
+    rect(livesIconX[livesIconX.length-1]+50, 573, (powerUpState.timeLeftForPowerUp)*10, 20)
   }
 }
 
+//Checks how the powerup block was hit
 function generateNewPowerUpTimer(howBlockWasDestroyed) {
   if (howBlockWasDestroyed == 'bullet') {
     //power in use for 10 seconds
     powerUpState.powerInUse = true
     powerUpState.delay = Math.ceil(Math.random()*10+15)
     powerUpState.timeDestroyed = frameCount
-    velocity+=5
+    if (powerUpState.powerUp === "+ Centipede Speed") {
+       velocity+=5 
+    }
+    else if (powerUpState.powerUp === "+ Moving Speed") {
+        crosshairSpeed+=3
+    }
+    else if (powerUpState.powerUp === "- Centipede Speed") {
+       tempVelocity = velocity
+       velocity=1
+    }
+    else if (powerUpState.powerUp === "Double Scores") {
+       scoreMultiplier = 2
+    }
+    else if (powerUpState.powerUp === "- Moving Speed") {
+        crosshairSpeed-=3
+    }
+    else if (powerUpState.powerUp === "Invincibility") {
+        invincible = true
+    }
     setTimeout(()=>{
-      velocity-=5
+      if (powerUpState.powerUp === "+ Centipede Speed") {
+        velocity-=5
+      }
+      else if (powerUpState.powerUp === "+ Moving Speed") {
+        crosshairSpeed-=3
+      }
+      else if (powerUpState.powerUp === "- Centipede Speed") {
+        velocity=tempVelocity
+      }
+      else if (powerUpState.powerUp === "- Moving Speed") {
+        crosshairSpeed+=3
+      }
+      else if (powerUpState.powerUp === "Double Scores") {
+        scoreMultiplier = 1
+      }
+      else if (powerUpState.powerUp === "Invincibility") {
+        invincible = false
+      }
       powerUpState.powerUp = random(powers)
       powerUpState.powerInUse = false
     }, 10000)
@@ -776,21 +821,46 @@ function generateNewPowerUpTimer(howBlockWasDestroyed) {
 function crossHair() {
   //Moves the crosshair if the user chooses to play with the arrow keys
   //Redraws the screen to animate the crosshair
-  fill(223, 27, 38);
-  if (keyIsDown(LEFT_ARROW) && crosshairX > 45) {
-    crosshairX -= 5;
+  if (!invincible) {
+    squareColor = color(223, 27, 38);
+  }
+  else {
+    squareColor.setAlpha(125)
+  }
+  fill(squareColor)
+  if (keyIsDown(LEFT_ARROW)) {
+    if (crosshairX > 45) {
+      crosshairX -= crosshairSpeed;
+    }
+    else {
+      crosshairX = 45
+    }
+  }
+  if (keyIsDown(RIGHT_ARROW)) {
+    if (crosshairX + 20 < 755) {
+      crosshairX += crosshairSpeed;
+    }
+    else {
+      crosshairX = 735
+    }
   }
 
-  if (keyIsDown(RIGHT_ARROW) && crosshairX + 20 < 755) {
-    crosshairX += 5;
+  if (keyIsDown(UP_ARROW)) {
+    if (crosshairY > 450) {
+      crosshairY -= crosshairSpeed;
+    }
+    else {
+      crosshairY = 450
+    }
   }
 
-  if (keyIsDown(UP_ARROW) && crosshairY > 450) {
-    crosshairY -= 5;
-  }
-
-  if (keyIsDown(DOWN_ARROW) && crosshairY + 25 < 560) {
-    crosshairY += 5;
+  if (keyIsDown(DOWN_ARROW)) {
+    if (crosshairY + 25 < 560) {
+      crosshairY += crosshairSpeed;
+    }
+    else {
+      crosshairY = 535
+    }
   }
   rect(crosshairX, crosshairY, 20, 25);
   fire();
@@ -815,6 +885,7 @@ function fire() {
           bulletY > spiderY &&
           bulletY < spiderY + 20
         ) {
+          score+=200*scoreMultiplier 
           spiderMoving = false;
           firing = false;
           currentSpiderTime = (frameCount / 60).toFixed(0);
@@ -840,7 +911,7 @@ function fire() {
         ) {
           firing = false;
           validRects[j] = false;
-          score += 50;
+          score += 50*scoreMultiplier;
         }
       }
     }
@@ -874,24 +945,23 @@ function fire() {
           validRects.push(true);
           validSquares[i] = false;
           firing = false;
-          score += 100;
+          score += 100*scoreMultiplier
           break;
         }
       }
     }
     //checks if a ship is moving and if it was hit
     if (shipMoving) {
-      if (bulletX > shipX && bulletX < shipX + shipW && bulletY < 20) {
+      if (bulletX > shipX && bulletX < shipX + shipW && bulletY < shipY) {
         firing = false;
         shipMoving = false;
-        score += 1000;
+        score += 1000*scoreMultiplier
         currentShipTime = (frameCount / 60).toFixed(0);
         tempShipX = shipX;
         numIsShownForShip = true;
         generateNewShipTimer();
       }
     }
-    //powerUpState.x
     if (powerUpState.shown) {
       if (
         bulletX + 2.5 > powerUpState.x &&
@@ -909,11 +979,14 @@ function fire() {
 function bonusShip() {
   fill("green");
   if (shipMoving) {
-    rect(shipX, 15, shipW, 5);
+    shipY = sin(shipX)*5+10
+    rect(shipX, shipY, shipW, 5);
     if (shipDirection == "left") {
       shipX += 5;
+      shipY = 20
     } else {
       shipX -= 5;
+      shipY = 20
     }
     if (shipX + shipW > 750 || shipX < 50) {
       generateNewShipTimer();
@@ -922,7 +995,7 @@ function bonusShip() {
 }
 
 function generateNewShipTimer() {
-  delay2 = Math.ceil(Math.random() * 3) * 1000;
+  delay2 = Math.ceil(Math.random() * 20) * 1000;
   shipMoving = false;
   if (shipDirection == "left") {
     shipX = 750 - shipW;
@@ -938,18 +1011,20 @@ function generateNewShipTimer() {
 
 function isPressed(x, y, d) {
   //I made this function before I learned a better way to detect collision, but kept it because it did the job
-  if (
-    dist(x, y, crosshairX, crosshairY) <= d / 2 ||
-    dist(x, y, crosshairX + 20, crosshairY) <= d / 2 ||
-    dist(x, y, crosshairX, crosshairY + 25) <= d / 2 ||
-    dist(x, y, crosshairX + 20, crosshairY + 20) <= d / 2
-  ) {
-    fill("#c04adc");
-    lives--;
-    tallyUp();
-    newWave();
-  } else {
-    fill("white");
+  if (!invincible) {
+    if (
+      dist(x, y, crosshairX, crosshairY) <= d / 2 ||
+      dist(x, y, crosshairX + 20, crosshairY) <= d / 2 ||
+      dist(x, y, crosshairX, crosshairY + 25) <= d / 2 ||
+      dist(x, y, crosshairX + 20, crosshairY + 20) <= d / 2
+    ) {
+      fill("#c04adc");
+      lives--;
+      tallyUp();
+      newWave();
+    } else {
+      fill("white");
+    }
   }
 }
 
@@ -986,6 +1061,9 @@ function restart() {
   screen = "title";
   velocity = 2;
   lives = 3;
+  rectX = []
+  rectY = []
+  score = 0
 }
 
 function newWave() {
@@ -1029,6 +1107,8 @@ function processScore() {
 function keyPressed() {
   if (keyIsDown(13)) {
     if (screen == "title") {
+      restart()
+      newWave()
       on = true;
       clearInterval(t);
       screen = "game";
@@ -1042,6 +1122,7 @@ function keyPressed() {
       clearInterval(t);
       screen = "title";
       processScore();
+      restart()
     }
     if (keyIsDown(32)) {
       if (letterSelected == 2) {
@@ -1067,7 +1148,7 @@ function keyPressed() {
       }
     }
   }
-  if (keyIsDown(76) && screen != "game") {
+  if (keyIsDown(76) && screen != "game" && screen !="gameover") {
     if (!showingScoreboard) {
       screen = "leaderboard";
       showingScoreboard = true;
